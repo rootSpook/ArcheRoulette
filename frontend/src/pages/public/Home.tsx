@@ -11,6 +11,9 @@ import styles from './Home.module.css';
 const VOTED_KEY = 'votedChampionId';
 const VOTED_SESSION_KEY = 'votedSessionId';
 const POLL_INTERVAL = 5000;
+const RESULT_DELAY_MS = 8000;
+
+type Phase = 'loading' | 'wait' | 'vote' | 'see_champion';
 
 function useCountdown(endsAt?: string) {
   const [remaining, setRemaining] = useState(0);
@@ -30,6 +33,7 @@ export default function Home() {
   const [champions, setChampions] = useState<Champion[]>([]);
   const [stats, setStats] = useState<StreamerStats | null>(null);
   const [session, setSession] = useState<VotingSession | null>(null);
+  const [phase, setPhase] = useState<Phase>('loading');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -40,15 +44,18 @@ export default function Home() {
   const searchRef = useRef(search);
   searchRef.current = search;
 
-  // Delay revealing the result so the public page doesn't show the winner
-  // before the admin's roulette wheel has finished spinning (~5.5s + buffer)
-  const [showResult, setShowResult] = useState(false);
   const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevStatusRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef(true);
 
   const countdown = useCountdown(session?.endsAt);
   const hasVoted = votedId !== null;
-  const isActive = session?.status === 'active';
+
+  function resolvePhase(status: string, hasWinner: boolean, showResult: boolean): Phase {
+    if (status === 'active') return 'vote';
+    if (status === 'result' && hasWinner && showResult) return 'see_champion';
+    return 'wait';
+  }
 
   const fetchAll = useCallback(async (query: string, showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -70,15 +77,25 @@ export default function Home() {
       setVotedId(null);
     }
 
-    // Delay showing the result so it doesn't appear before the wheel stops
-    if (newSession.status === 'result' && prevStatusRef.current !== 'result') {
+    const hasWinner = !!newSession.winner;
+
+    if (newSession.status === 'result' && hasWinner) {
+      if (isInitialLoadRef.current) {
+        // Page was refreshed while result already showing — reveal immediately
+        setPhase('see_champion');
+      } else if (prevStatusRef.current !== 'result') {
+        // Fresh transition to result — delay to let the wheel finish
+        setPhase('wait');
+        if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
+        resultTimerRef.current = setTimeout(() => setPhase('see_champion'), RESULT_DELAY_MS);
+      }
+    } else {
       if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
-      resultTimerRef.current = setTimeout(() => setShowResult(true), 8000);
-    } else if (newSession.status !== 'result') {
-      if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
-      setShowResult(false);
+      setPhase(newSession.status === 'active' ? 'vote' : 'wait');
     }
+
     prevStatusRef.current = newSession.status;
+    isInitialLoadRef.current = false;
 
     if (showLoading) setLoading(false);
   }, []);
@@ -94,6 +111,9 @@ export default function Home() {
     const id = setInterval(() => fetchAll(searchRef.current, false), POLL_INTERVAL);
     return () => clearInterval(id);
   }, [fetchAll]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => { if (resultTimerRef.current) clearTimeout(resultTimerRef.current); }, []);
 
   async function handleOyla() {
     if (!selectedId || submitting) return;
@@ -115,8 +135,23 @@ export default function Home() {
 
   const selectedChamp = champions.find((c) => c._id === selectedId);
 
-  // ── Result screen (delayed so wheel finishes before public sees winner) ──
-  if (session?.status === 'result' && session.winner && showResult) {
+  // ── WAIT phase ───────────────────────────────────────────────────────────
+  if (phase === 'loading' || phase === 'wait') {
+    return (
+      <div className={styles.page}>
+        <div className={styles.overlay} />
+        <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+          <h1 className={styles.title} style={{ marginBottom: '1rem' }}>Oylama</h1>
+          <p style={{ color: '#884444', fontSize: '1rem' }}>
+            {phase === 'loading' ? 'Yükleniyor...' : 'Şu anda devam eden bir oylama bulunmamakta.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── SEE CHAMPION phase ───────────────────────────────────────────────────
+  if (phase === 'see_champion' && session?.winner) {
     const w = session.winner;
     const splashUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${w.championId}_0.jpg`;
     return (
@@ -135,20 +170,7 @@ export default function Home() {
     );
   }
 
-  // ── Idle / ended screen ──────────────────────────────────────────────────
-  if (!session || session.status === 'idle' || session.status === 'ended') {
-    return (
-      <div className={styles.page}>
-        <div className={styles.overlay} />
-        <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-          <h1 className={styles.title} style={{ marginBottom: '1rem' }}>Oylama</h1>
-          <p style={{ color: '#884444', fontSize: '1rem' }}>Şu anda devam eden bir oylama bulunmamakta.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Active voting screen ─────────────────────────────────────────────────
+  // ── VOTE phase ───────────────────────────────────────────────────────────
   return (
     <div className={styles.page}>
       <div className={styles.overlay} />
@@ -199,7 +221,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={`${styles.voteBar} ${selectedId && !hasVoted && isActive ? styles.visible : ''}`}>
+      <div className={`${styles.voteBar} ${selectedId && !hasVoted ? styles.visible : ''}`}>
         <div className={styles.selectedName}>Seçilen: <span>{selectedChamp?.name ?? ''}</span></div>
         <div className={styles.oylaBtnWrapper}>
           <button className={styles.oylaBtn} onClick={handleOyla} disabled={submitting}>
