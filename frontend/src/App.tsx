@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import Home from './pages/public/Home';
+import Istatistik from './pages/public/Istatistik';
+import MacGecmisi from './pages/public/MacGecmisi';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -18,6 +20,8 @@ export default function App() {
         <Routes>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/istatistik" element={<Istatistik />} />
+            <Route path="/mac-gecmisi" element={<MacGecmisi />} />
           </Route>
           <Route path="/admin/login" element={<Login />} />
           <Route

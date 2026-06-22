@@ -1,20 +1,24 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import styles from './AdminLayout.module.css';
 
 export default function AdminLayout() {
   const { logout } = useAuth();
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <nav style={{ width: 220, padding: '1rem', borderRight: '1px solid #eee' }}>
-        <strong>Admin Panel</strong>
-        <ul style={{ listStyle: 'none', marginTop: '1rem' }}>
-          <li><Link to="/admin">Dashboard</Link></li>
+    <div className={styles.wrapper}>
+      <div className={styles.overlay} />
+      <nav className={styles.sidebar}>
+        <div className={styles.logo}>ArcheRoulette<span>Admin</span></div>
+        <ul className={styles.menu}>
+          <li>
+            <NavLink to="/admin" end className={({ isActive }) => isActive ? `${styles.link} ${styles.active}` : styles.link}>
+              Dashboard
+            </NavLink>
+          </li>
         </ul>
-        <button onClick={logout} style={{ marginTop: '2rem' }}>
-          Logout
-        </button>
+        <button onClick={logout} className={styles.logoutBtn}>Çıkış Yap</button>
       </nav>
-      <main style={{ flex: 1, padding: '1rem' }}>
+      <main className={styles.main}>
         <Outlet />
       </main>
     </div>

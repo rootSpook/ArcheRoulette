@@ -19,14 +19,14 @@ async function seed() {
   console.log('MongoDB connected');
 
   const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
-  const versions: string[] = await versionsRes.json();
+  const versions = await versionsRes.json() as string[];
   const version = versions[0];
   console.log(`Using Data Dragon version: ${version}`);
 
   const championsRes = await fetch(
     `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
   );
-  const championsData: DDragonResponse = await championsRes.json();
+  const championsData = await championsRes.json() as DDragonResponse;
 
   const champions = Object.values(championsData.data);
   console.log(`Found ${champions.length} champions`);

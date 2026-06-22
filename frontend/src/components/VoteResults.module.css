@@ -1,0 +1,104 @@
+.wrapper {
+  max-width: 1000px;
+  margin: 0 auto 2.5rem;
+  background: rgba(10, 0, 0, 0.75);
+  border: 1px solid #2a0a0a;
+  border-radius: 10px;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+}
+
+.title {
+  text-align: center;
+  color: #e03030;
+  font-size: 1.3rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.05em;
+}
+
+.inner {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.chartBox {
+  flex: 0 0 260px;
+  min-width: 220px;
+}
+
+.list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 240px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rank {
+  font-weight: 700;
+  font-size: 0.9rem;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.splash {
+  width: 64px;
+  height: 36px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 4px;
+  border: 1px solid #2a0a0a;
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.champName {
+  font-size: 0.85rem;
+  color: #e8d0d0;
+  font-weight: 600;
+}
+
+.bar {
+  height: 6px;
+  background: #1a0000;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.pct {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+.voteCount {
+  font-size: 0.7rem;
+  color: #884444;
+  font-weight: 400;
+}

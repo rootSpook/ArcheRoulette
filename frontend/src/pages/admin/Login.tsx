@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import styles from './Login.module.css';
 
 export default function Login() {
   const { login } = useAuth();
@@ -14,19 +15,22 @@ export default function Login() {
       await login(form.get('username') as string, form.get('password') as string);
       navigate('/admin');
     } catch {
-      setError('Invalid credentials');
+      setError('Kullanıcı adı veya şifre hatalı.');
     }
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: '6rem auto', padding: '2rem', border: '1px solid #eee' }}>
-      <h2>Admin Login</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-        <input name="username" placeholder="Username" required />
-        <input name="password" type="password" placeholder="Password" required />
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit">Login</button>
-      </form>
+    <div className={styles.page}>
+      <div className={styles.overlay} />
+      <div className={styles.card}>
+        <div className={styles.logo}>ArcheRoulette<span>Admin</span></div>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <input name="username" placeholder="Kullanıcı adı" required className={styles.input} />
+          <input name="password" type="password" placeholder="Şifre" required className={styles.input} />
+          {error && <p className={styles.error}>{error}</p>}
+          <button type="submit" className={styles.btn}>Giriş Yap</button>
+        </form>
+      </div>
     </div>
   );
 }

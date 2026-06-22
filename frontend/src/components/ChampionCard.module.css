@@ -1,0 +1,67 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid #2a0a0a;
+  border-radius: 8px;
+  background: rgba(15, 5, 5, 0.85);
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.card:hover {
+  border-color: #cc2222;
+  transform: translateY(-3px);
+  background: rgba(30, 5, 5, 0.9);
+}
+
+.selected {
+  border-color: #e03030;
+  background: rgba(80, 5, 5, 0.85);
+  box-shadow: 0 0 12px rgba(220, 30, 30, 0.5);
+}
+
+.voted {
+  border-color: #555;
+  background: rgba(15, 15, 15, 0.7);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.voted:hover {
+  transform: none;
+  border-color: #555;
+}
+
+.img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #3a0a0a;
+  transition: border-color 0.2s;
+}
+
+.selected .img {
+  border-color: #e03030;
+}
+
+.name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e8d0d0;
+  text-align: center;
+}
+
+.counter {
+  font-size: 0.72rem;
+  color: #884444;
+}
+
+.votedBadge {
+  font-size: 0.72rem;
+  color: #888;
+  font-style: italic;
+}

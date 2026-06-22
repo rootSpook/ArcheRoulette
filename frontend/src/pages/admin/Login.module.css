@@ -1,0 +1,97 @@
+.page {
+  min-height: 100vh;
+  background-color: #0a0000;
+  background-image: url('../../background/vlad_horizantal.jpg');
+  background-size: cover;
+  background-position: center top;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 360px;
+  background: rgba(8, 0, 0, 0.88);
+  border: 1px solid #2a0a0a;
+  border-radius: 10px;
+  padding: 2rem;
+  backdrop-filter: blur(8px);
+}
+
+.logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e03030;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.75rem;
+  text-align: center;
+}
+
+.logo span {
+  display: block;
+  font-size: 0.7rem;
+  color: #884444;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.input {
+  padding: 0.55rem 0.85rem;
+  background: #0f0000;
+  border: 1px solid #2a0a0a;
+  border-radius: 5px;
+  color: #e8d0d0;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #e03030;
+}
+
+.input::placeholder {
+  color: #664444;
+}
+
+.error {
+  color: #e03030;
+  font-size: 0.82rem;
+}
+
+.btn {
+  padding: 0.6rem;
+  background: #cc1111;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 10px rgba(200, 10, 10, 0.3);
+  margin-top: 0.25rem;
+}
+
+.btn:hover {
+  background: #e02020;
+  box-shadow: 0 0 18px rgba(220, 20, 20, 0.5);
+}
