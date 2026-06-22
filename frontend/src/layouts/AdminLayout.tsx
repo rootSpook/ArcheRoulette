@@ -30,6 +30,11 @@ export default function AdminLayout() {
               İstatistikler
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/admin/ayarlar" className={({ isActive }) => isActive ? `${styles.link} ${styles.active}` : styles.link}>
+              Ayarlar
+            </NavLink>
+          </li>
         </ul>
         <button onClick={logout} className={styles.logoutBtn}>Çıkış Yap</button>
       </nav>

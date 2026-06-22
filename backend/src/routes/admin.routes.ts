@@ -5,6 +5,7 @@ import Match from '../models/Match';
 import Champion from '../models/Champion';
 import VotingSession from '../models/VotingSession';
 import VoterLog from '../models/VoterLog';
+import User from '../models/User';
 
 const router = Router();
 
@@ -12,6 +13,49 @@ router.use(requireAuth);
 
 router.get('/dashboard', (req: AuthRequest, res: Response) => {
   res.json({ message: 'Welcome to the admin dashboard', userId: req.userId });
+});
+
+// ── Account ──────────────────────────────────────────────────────────────────
+
+router.put('/account/password', async (req: AuthRequest, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({ message: 'Mevcut ve yeni şifre gerekli.' });
+    return;
+  }
+  if (newPassword.length < 6) {
+    res.status(400).json({ message: 'Yeni şifre en az 6 karakter olmalı.' });
+    return;
+  }
+
+  const user = await User.findById(req.userId);
+  if (!user) {
+    res.status(404).json({ message: 'Kullanıcı bulunamadı.' });
+    return;
+  }
+
+  const matches = await user.comparePassword(currentPassword);
+  if (!matches) {
+    res.status(401).json({ message: 'Mevcut şifre yanlış.' });
+    return;
+  }
+
+  user.password = newPassword;
+  await user.save();
+  res.json({ message: 'Şifre güncellendi.' });
+});
+
+// ── Danger zone ──────────────────────────────────────────────────────────────
+
+router.post('/reset-all', async (_req: Request, res: Response) => {
+  await Promise.all([
+    Champion.updateMany({}, { $set: { counter: 0, wins: 0, timesPlayed: 0 } }),
+    VoterLog.deleteMany({}),
+    Match.deleteMany({}),
+    VotingSession.deleteMany({}),
+    StreamerStats.deleteMany({}),
+  ]);
+  res.json({ message: 'Tüm veriler sıfırlandı.' });
 });
 
 // ── Voting controls ──────────────────────────────────────────────────────────

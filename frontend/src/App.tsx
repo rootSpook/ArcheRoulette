@@ -9,6 +9,7 @@ import AdminOylama from './pages/admin/Oylama';
 import AdminRank from './pages/admin/Rank';
 import AdminMacGecmisi from './pages/admin/MacGecmisi';
 import AdminIstatistikler from './pages/admin/Istatistikler';
+import AdminAyarlar from './pages/admin/Ayarlar';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="rank" element={<AdminRank />} />
             <Route path="mac-gecmisi" element={<AdminMacGecmisi />} />
             <Route path="istatistikler" element={<AdminIstatistikler />} />
+            <Route path="ayarlar" element={<AdminAyarlar />} />
           </Route>
         </Routes>
       </BrowserRouter>
