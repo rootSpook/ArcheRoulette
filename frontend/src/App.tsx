@@ -5,7 +5,10 @@ import Home from './pages/public/Home';
 import Istatistik from './pages/public/Istatistik';
 import MacGecmisi from './pages/public/MacGecmisi';
 import Login from './pages/admin/Login';
-import Dashboard from './pages/admin/Dashboard';
+import AdminOylama from './pages/admin/Oylama';
+import AdminRank from './pages/admin/Rank';
+import AdminMacGecmisi from './pages/admin/MacGecmisi';
+import AdminIstatistikler from './pages/admin/Istatistikler';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -32,7 +35,11 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
+            <Route index element={<Navigate to="/admin/oylama" replace />} />
+            <Route path="oylama" element={<AdminOylama />} />
+            <Route path="rank" element={<AdminRank />} />
+            <Route path="mac-gecmisi" element={<AdminMacGecmisi />} />
+            <Route path="istatistikler" element={<AdminIstatistikler />} />
           </Route>
         </Routes>
       </BrowserRouter>

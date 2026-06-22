@@ -1,0 +1,154 @@
+.page {
+  max-width: 860px;
+}
+
+.title {
+  font-size: 1.5rem;
+  color: #e03030;
+  margin-bottom: 1.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #2a0a0a;
+}
+
+.card {
+  background: rgba(10, 0, 0, 0.7);
+  border: 1px solid #2a0a0a;
+  border-radius: 10px;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+  margin-bottom: 1.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+.row label {
+  width: 120px;
+  font-size: 0.85rem;
+  color: #884444;
+  flex-shrink: 0;
+}
+
+.row input,
+.row select {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  background: #0f0000;
+  border: 1px solid #2a0a0a;
+  border-radius: 5px;
+  color: #e8d0d0;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.row input:focus,
+.row select:focus {
+  border-color: #e03030;
+}
+
+.row select option {
+  background: #0f0000;
+}
+
+.btn {
+  padding: 0.55rem 1.5rem;
+  background: #cc1111;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 10px rgba(200, 10, 10, 0.3);
+}
+
+.btn:hover {
+  background: #e02020;
+  box-shadow: 0 0 18px rgba(220, 20, 20, 0.5);
+}
+
+.btnOutline {
+  padding: 0.45rem 1.1rem;
+  background: transparent;
+  border: 1px solid #3a0a0a;
+  border-radius: 5px;
+  color: #884444;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnOutline:hover {
+  color: #e03030;
+  border-color: #e03030;
+}
+
+.status {
+  color: #664444;
+  font-size: 0.85rem;
+}
+
+.success {
+  color: #4caf50;
+  font-size: 0.85rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #2a0a0a;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(10, 0, 0, 0.7);
+}
+
+.table th {
+  padding: 0.7rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  color: #884444;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #2a0a0a;
+}
+
+.table td {
+  padding: 0.55rem 1rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid #1a0000;
+  vertical-align: middle;
+  color: #e8d0d0;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: rgba(40, 5, 5, 0.5);
+}
+
+.img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #2a0a0a;
+  display: block;
+}
+
+.win { color: #4caf50; font-weight: 600; }
+.loss { color: #e03030; font-weight: 600; }

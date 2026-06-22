@@ -51,11 +51,10 @@
 }
 
 .splash {
-  width: 64px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
-  object-position: top;
-  border-radius: 4px;
+  border-radius: 50%;
   border: 1px solid #2a0a0a;
   flex-shrink: 0;
 }

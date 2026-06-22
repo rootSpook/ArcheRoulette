@@ -35,6 +35,7 @@ export default function VoteResults({ champions }: Props) {
                 outerRadius={110}
                 innerRadius={50}
                 paddingAngle={2}
+                isAnimationActive={false}
               >
                 {data.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -51,13 +52,12 @@ export default function VoteResults({ champions }: Props) {
         <div className={styles.list}>
           {voted.map((champ, i) => {
             const pct = ((champ.counter / total) * 100).toFixed(1);
-            const splashUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champ.championId}_0.jpg`;
             return (
               <div key={champ._id} className={styles.row}>
                 <div className={styles.rank} style={{ color: COLORS[i % COLORS.length] }}>
                   #{i + 1}
                 </div>
-                <img src={splashUrl} alt={champ.name} className={styles.splash} />
+                <img src={champ.imgLink} alt={champ.name} className={styles.splash} />
                 <div className={styles.info}>
                   <div className={styles.champName}>{champ.name}</div>
                   <div className={styles.bar}>

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import Champion from '../models/Champion';
 import VoterLog from '../models/VoterLog';
 import StreamerStats from '../models/StreamerStats';
+import VotingSession from '../models/VotingSession';
 
 const router = Router();
 
@@ -9,6 +10,18 @@ function getIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
   return req.ip || 'unknown';
+}
+
+async function getSession() {
+  let session = await VotingSession.findOne();
+  if (!session) session = await VotingSession.create({ status: 'idle' });
+
+  // Lazily transition active → ended when timer expires
+  if (session.status === 'active' && session.endsAt && session.endsAt < new Date()) {
+    session.status = 'ended';
+    await session.save();
+  }
+  return session;
 }
 
 router.get('/health', (_req: Request, res: Response) => {
@@ -21,6 +34,12 @@ router.get('/stats', async (_req: Request, res: Response) => {
   res.json(stats);
 });
 
+router.get('/voting', async (_req: Request, res: Response) => {
+  const session = await getSession();
+  await session.populate('winner', 'name imgLink championId');
+  res.json(session);
+});
+
 router.get('/champions', async (req: Request, res: Response) => {
   const search = req.query.search as string | undefined;
   const filter = search ? { name: { $regex: search, $options: 'i' } } : {};
@@ -28,15 +47,14 @@ router.get('/champions', async (req: Request, res: Response) => {
   res.json(champions);
 });
 
-router.delete('/votes/reset', async (_req: Request, res: Response) => {
-  await VoterLog.deleteMany({});
-  await Champion.updateMany({}, { $set: { counter: 0 } });
-  res.json({ message: 'Tüm oylar sıfırlandı.' });
-});
-
 router.post('/champions/:id/vote', async (req: Request, res: Response) => {
-  const ip = getIp(req);
+  const session = await getSession();
+  if (session.status !== 'active') {
+    res.status(403).json({ message: 'Şu anda aktif bir oylama bulunmuyor.' });
+    return;
+  }
 
+  const ip = getIp(req);
   const existing = await VoterLog.findOne({ ip });
   if (existing) {
     res.status(403).json({ message: 'Zaten oy kullandınız.' });
