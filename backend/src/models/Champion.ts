@@ -7,6 +7,8 @@ export interface IChampion extends Document {
   timesPlayed: number;
   wins: number;
   counter: number;
+  cooldownRemaining: number;
+  banned: boolean;
 }
 
 const championSchema = new Schema<IChampion>(
@@ -17,6 +19,8 @@ const championSchema = new Schema<IChampion>(
     timesPlayed: { type: Number, default: 0 },
     wins: { type: Number, default: 0 },
     counter: { type: Number, default: 0 },
+    cooldownRemaining: { type: Number, default: 0 },
+    banned: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -92,6 +92,12 @@
   top: 80px;
 }
 
+.sidebarLeft {
+  flex: 0 0 200px;
+  position: sticky;
+  top: 80px;
+}
+
 /* Fixed bottom vote bar */
 .voteBar {
   position: fixed;

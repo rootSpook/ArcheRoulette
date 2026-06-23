@@ -1,0 +1,83 @@
+.panel {
+  background: rgba(10, 0, 0, 0.82);
+  border: 1px solid #2a0a0a;
+  border-radius: 10px;
+  padding: 1.1rem 0.9rem;
+  backdrop-filter: blur(4px);
+  width: 100%;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.sectionTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e03030;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.divider {
+  height: 1px;
+  background: #2a0a0a;
+  margin: 0.9rem 0;
+}
+
+.empty {
+  font-size: 0.78rem;
+  color: #664444;
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #3a0a0a;
+  flex-shrink: 0;
+  filter: grayscale(0.5);
+  opacity: 0.75;
+}
+
+.bannedImg {
+  filter: grayscale(0.9);
+  opacity: 0.6;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #c8a0a0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cooldown {
+  font-size: 0.68rem;
+  color: #884444;
+}

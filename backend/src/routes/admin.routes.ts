@@ -6,6 +6,7 @@ import Champion from '../models/Champion';
 import VotingSession from '../models/VotingSession';
 import VoterLog from '../models/VoterLog';
 import User from '../models/User';
+import Settings from '../models/Settings';
 
 const router = Router();
 
@@ -45,17 +46,59 @@ router.put('/account/password', async (req: AuthRequest, res: Response) => {
   res.json({ message: 'Şifre güncellendi.' });
 });
 
+// ── Settings ─────────────────────────────────────────────────────────────────
+
+router.get('/settings', async (_req: Request, res: Response) => {
+  let settings = await Settings.findOne();
+  if (!settings) settings = await Settings.create({});
+  res.json(settings);
+});
+
+router.put('/settings', async (req: Request, res: Response) => {
+  const { cooldownEnabled, cooldownRounds } = req.body;
+  if (cooldownRounds !== undefined && Number(cooldownRounds) < 1) {
+    res.status(400).json({ message: 'Bekleme süresi en az 1 round olmalı.' });
+    return;
+  }
+
+  let settings = await Settings.findOne();
+  if (!settings) {
+    settings = await Settings.create({ cooldownEnabled, cooldownRounds });
+  } else {
+    settings.cooldownEnabled = cooldownEnabled ?? settings.cooldownEnabled;
+    settings.cooldownRounds = cooldownRounds ?? settings.cooldownRounds;
+    await settings.save();
+  }
+  res.json(settings);
+});
+
 // ── Danger zone ──────────────────────────────────────────────────────────────
 
 router.post('/reset-all', async (_req: Request, res: Response) => {
   await Promise.all([
-    Champion.updateMany({}, { $set: { counter: 0, wins: 0, timesPlayed: 0 } }),
+    Champion.updateMany({}, { $set: { counter: 0, wins: 0, timesPlayed: 0, cooldownRemaining: 0, banned: false } }),
     VoterLog.deleteMany({}),
     Match.deleteMany({}),
     VotingSession.deleteMany({}),
     StreamerStats.deleteMany({}),
   ]);
   res.json({ message: 'Tüm veriler sıfırlandı.' });
+});
+
+// ── Champion bans ────────────────────────────────────────────────────────────
+
+router.put('/champions/:id/ban', async (req: Request, res: Response) => {
+  const { banned } = req.body;
+  const champion = await Champion.findByIdAndUpdate(
+    req.params.id,
+    { $set: { banned: !!banned } },
+    { new: true }
+  );
+  if (!champion) {
+    res.status(404).json({ message: 'Şampiyon bulunamadı.' });
+    return;
+  }
+  res.json(champion);
 });
 
 // ── Voting controls ──────────────────────────────────────────────────────────
@@ -71,6 +114,13 @@ router.post('/voting/start', async (req: Request, res: Response) => {
   // Reset all votes for a fresh session
   await VoterLog.deleteMany({});
   await Champion.updateMany({}, { $set: { counter: 0 } });
+
+  // Tick down cooldowns by one round — a champion that just won won't be
+  // votable again until this reaches 0
+  await Champion.updateMany(
+    { cooldownRemaining: { $gt: 0 } },
+    { $inc: { cooldownRemaining: -1 } }
+  );
 
   // Always delete and recreate so a new _id is generated.
   // The frontend uses _id to detect a new session and clear localStorage votes.
@@ -169,6 +219,13 @@ router.post('/matches', async (req: Request, res: Response) => {
   const match = await Match.create({ champion: championId, result });
   champion.timesPlayed += 1;
   if (result === 'win') champion.wins += 1;
+
+  // Recording a match result puts the champion on cooldown
+  const settings = await Settings.findOne();
+  if (settings?.cooldownEnabled) {
+    champion.cooldownRemaining = settings.cooldownRounds;
+  }
+
   await champion.save();
   await match.populate('champion', 'name imgLink championId');
   res.status(201).json(match);

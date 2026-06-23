@@ -1,5 +1,6 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import api from '../../lib/api';
+import { Settings } from '../../types/settings';
 import styles from './admin.module.css';
 
 const RESET_CONFIRM_TEXT = 'SIFIRLA';
@@ -12,9 +13,17 @@ export default function AdminAyarlar() {
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwSubmitting, setPwSubmitting] = useState(false);
 
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState('');
+
   const [resetInput, setResetInput] = useState('');
   const [resetSubmitting, setResetSubmitting] = useState(false);
   const [resetError, setResetError] = useState('');
+
+  useEffect(() => {
+    api.get<Settings>('/admin/settings').then(({ data }) => setSettings(data));
+  }, []);
 
   async function handlePasswordSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +47,23 @@ export default function AdminAyarlar() {
       setPwError(msg);
     } finally {
       setPwSubmitting(false);
+    }
+  }
+
+  async function handleSettingsSave() {
+    if (!settings) return;
+    setSettingsSaving(true);
+    setSettingsSuccess('');
+    try {
+      const { data } = await api.put<Settings>('/admin/settings', {
+        cooldownEnabled: settings.cooldownEnabled,
+        cooldownRounds: settings.cooldownRounds,
+      });
+      setSettings(data);
+      setSettingsSuccess('Kaydedildi ✓');
+      setTimeout(() => setSettingsSuccess(''), 2000);
+    } finally {
+      setSettingsSaving(false);
     }
   }
 
@@ -102,6 +128,43 @@ export default function AdminAyarlar() {
           </div>
         </form>
       </div>
+
+      {settings && (
+        <div className={styles.card}>
+          <p style={{ color: '#884444', fontSize: '0.85rem', marginBottom: '1rem' }}>Oylama Ayarları</p>
+
+          <div className={styles.toggleRow}>
+            <span className={styles.toggleLabel}>Şampiyon seçimi bekleme süresi olsun mu?</span>
+            <label className={styles.switch}>
+              <input
+                type="checkbox"
+                checked={settings.cooldownEnabled}
+                onChange={(e) => setSettings({ ...settings, cooldownEnabled: e.target.checked })}
+              />
+              <span className={styles.slider} />
+            </label>
+          </div>
+
+          {settings.cooldownEnabled && (
+            <div className={styles.row} style={{ marginTop: '1rem' }}>
+              <label>Bekleme süresi (round)</label>
+              <input
+                type="number"
+                min={1}
+                value={settings.cooldownRounds}
+                onChange={(e) => setSettings({ ...settings, cooldownRounds: Number(e.target.value) })}
+              />
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1.25rem' }}>
+            <button className={styles.btn} onClick={handleSettingsSave} disabled={settingsSaving}>
+              {settingsSaving ? 'Kaydediliyor...' : 'Kaydet'}
+            </button>
+            {settingsSuccess && <span className={styles.success}>{settingsSuccess}</span>}
+          </div>
+        </div>
+      )}
 
       <div className={styles.card} style={{ borderColor: '#5a1010' }}>
         <p style={{ color: '#e03030', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 700 }}>

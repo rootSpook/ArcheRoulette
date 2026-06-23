@@ -4,6 +4,7 @@ import VoterLog from '../models/VoterLog';
 import StreamerStats from '../models/StreamerStats';
 import VotingSession from '../models/VotingSession';
 import Match from '../models/Match';
+import Settings from '../models/Settings';
 
 const router = Router();
 
@@ -33,6 +34,12 @@ router.get('/stats', async (_req: Request, res: Response) => {
   let stats = await StreamerStats.findOne();
   if (!stats) stats = await StreamerStats.create({});
   res.json(stats);
+});
+
+router.get('/settings', async (_req: Request, res: Response) => {
+  let settings = await Settings.findOne();
+  if (!settings) settings = await Settings.create({});
+  res.json(settings);
 });
 
 router.get('/voting', async (_req: Request, res: Response) => {
@@ -66,6 +73,23 @@ router.post('/champions/:id/vote', async (req: Request, res: Response) => {
   const existing = await VoterLog.findOne({ ip });
   if (existing) {
     res.status(403).json({ message: 'Zaten oy kullandınız.' });
+    return;
+  }
+
+  const target = await Champion.findById(req.params.id);
+  if (!target) {
+    res.status(404).json({ message: 'Şampiyon bulunamadı.' });
+    return;
+  }
+
+  if (target.banned) {
+    res.status(403).json({ message: 'Bu şampiyon yasaklı.' });
+    return;
+  }
+
+  const settings = await Settings.findOne();
+  if (settings?.cooldownEnabled && target.cooldownRemaining > 0) {
+    res.status(403).json({ message: 'Bu şampiyon şu anda beklemede.' });
     return;
   }
 

@@ -6,4 +6,6 @@ export interface Champion {
   timesPlayed: number;
   wins: number;
   counter: number;
+  cooldownRemaining: number;
+  banned: boolean;
 }

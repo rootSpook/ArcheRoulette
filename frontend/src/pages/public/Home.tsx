@@ -3,9 +3,11 @@ import api from '../../lib/api';
 import { Champion } from '../../types/champion';
 import { StreamerStats } from '../../types/stats';
 import { VotingSession } from '../../types/voting';
+import { Settings } from '../../types/settings';
 import ChampionCard from '../../components/ChampionCard';
 import VoteResults from '../../components/VoteResults';
 import StatsPanel from '../../components/StatsPanel';
+import BannedChampionsPanel from '../../components/BannedChampionsPanel';
 import styles from './Home.module.css';
 
 const VOTED_KEY = 'votedChampionId';
@@ -32,6 +34,7 @@ function useCountdown(endsAt?: string) {
 export default function Home() {
   const [champions, setChampions] = useState<Champion[]>([]);
   const [stats, setStats] = useState<StreamerStats | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [session, setSession] = useState<VotingSession | null>(null);
   const [phase, setPhase] = useState<Phase>('loading');
   const [search, setSearch] = useState('');
@@ -53,13 +56,15 @@ export default function Home() {
 
   const fetchAll = useCallback(async (query: string, showLoading = false) => {
     if (showLoading) setLoading(true);
-    const [champsRes, statsRes, sessionRes] = await Promise.all([
+    const [champsRes, statsRes, sessionRes, settingsRes] = await Promise.all([
       api.get<Champion[]>('/public/champions', { params: query ? { search: query } : {} }),
       api.get<StreamerStats>('/public/stats'),
       api.get<VotingSession>('/public/voting'),
+      api.get<Settings>('/public/settings'),
     ]);
     setChampions(champsRes.data);
     setStats(statsRes.data);
+    setSettings(settingsRes.data);
 
     const newSession = sessionRes.data;
     setSession(newSession);
@@ -205,6 +210,10 @@ export default function Home() {
       <div className={styles.overlay} />
       <div className={styles.content}>
         <div className={styles.mainRow}>
+          <aside className={styles.sidebarLeft}>
+            <BannedChampionsPanel champions={champions} cooldownEnabled={settings?.cooldownEnabled ?? false} />
+          </aside>
+
           <div className={styles.pollSection}>{mainContent}</div>
 
           <aside className={styles.sidebar}>

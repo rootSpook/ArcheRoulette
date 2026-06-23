@@ -3,6 +3,7 @@ import api from '../../lib/api';
 import { Champion } from '../../types/champion';
 import { VotingSession } from '../../types/voting';
 import RouletteWheel from '../../components/RouletteWheel';
+import BanManager from '../../components/BanManager';
 import styles from './admin.module.css';
 
 function useCountdown(endsAt?: string) {
@@ -288,6 +289,11 @@ export default function AdminOylama() {
           )}
         </div>
       )}
+
+      <div className={styles.card} style={{ marginTop: '2rem' }}>
+        <p style={{ color: '#884444', fontSize: '0.85rem', marginBottom: '1rem' }}>Yasaklı Şampiyonlar</p>
+        <BanManager />
+      </div>
     </div>
   );
 }
