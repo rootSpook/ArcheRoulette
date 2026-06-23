@@ -7,12 +7,16 @@ export type Tier =
 
 export type Division = 'I' | 'II' | 'III' | 'IV';
 
+export type StreakType = 'win' | 'loss';
+
 export interface IStreamerStats extends Document {
   tier: Tier;
   division: Division;
   lp: number;
   wins: number;
   losses: number;
+  streakType: StreakType;
+  streakCount: number;
 }
 
 const streamerStatsSchema = new Schema<IStreamerStats>(
@@ -22,6 +26,8 @@ const streamerStatsSchema = new Schema<IStreamerStats>(
     lp: { type: Number, default: 0 },
     wins: { type: Number, default: 0 },
     losses: { type: Number, default: 0 },
+    streakType: { type: String, enum: ['win', 'loss'], default: 'win' },
+    streakCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -5,6 +5,8 @@ export type Tier =
 
 export type Division = 'I' | 'II' | 'III' | 'IV';
 
+export type StreakType = 'win' | 'loss';
+
 export interface StreamerStats {
   _id: string;
   tier: Tier;
@@ -12,4 +14,6 @@ export interface StreamerStats {
   lp: number;
   wins: number;
   losses: number;
+  streakType: StreakType;
+  streakCount: number;
 }

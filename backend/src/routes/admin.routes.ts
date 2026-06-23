@@ -178,19 +178,24 @@ router.post('/voting/spin', async (_req: Request, res: Response) => {
 // ── Stats ────────────────────────────────────────────────────────────────────
 
 router.put('/stats', async (req: Request, res: Response) => {
-  const { tier, division, lp, wins, losses } = req.body;
+  // wins/losses are derived automatically from recorded matches, not editable here
+  const { tier, division, lp } = req.body;
   let stats = await StreamerStats.findOne();
   if (!stats) {
-    stats = await StreamerStats.create({ tier, division, lp, wins, losses });
+    stats = await StreamerStats.create({ tier, division, lp });
   } else {
     stats.tier = tier ?? stats.tier;
     stats.division = division ?? stats.division;
     stats.lp = lp ?? stats.lp;
-    stats.wins = wins ?? stats.wins;
-    stats.losses = losses ?? stats.losses;
     await stats.save();
   }
-  res.json(stats);
+
+  const [wins, losses] = await Promise.all([
+    Match.countDocuments({ result: 'win' }),
+    Match.countDocuments({ result: 'loss' }),
+  ]);
+
+  res.json({ ...stats.toObject(), wins, losses });
 });
 
 // ── Matches ──────────────────────────────────────────────────────────────────
@@ -228,6 +233,20 @@ router.post('/matches', async (req: Request, res: Response) => {
   }
 
   await champion.save();
+
+  // Update the streamer's win/lose streak automatically.
+  // wins/losses themselves are derived live from Match documents (see GET /stats),
+  // so no separate counter is incremented here — it would only risk drifting.
+  let stats = await StreamerStats.findOne();
+  if (!stats) stats = await StreamerStats.create({});
+  if (stats.streakType === result) {
+    stats.streakCount += 1;
+  } else {
+    stats.streakType = result;
+    stats.streakCount = 1;
+  }
+  await stats.save();
+
   await match.populate('champion', 'name imgLink championId');
   res.status(201).json(match);
 });
@@ -244,6 +263,9 @@ router.delete('/matches/:id', async (req: Request, res: Response) => {
     if (match.result === 'win') champion.wins = Math.max(0, champion.wins - 1);
     await champion.save();
   }
+
+  // No StreamerStats.wins/losses to update — those are derived live from
+  // Match documents, so deleting this one automatically updates the count.
   await match.deleteOne();
   res.json({ message: 'Maç silindi.' });
 });

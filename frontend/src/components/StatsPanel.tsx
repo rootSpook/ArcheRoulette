@@ -63,6 +63,12 @@ export default function StatsPanel({ stats }: Props) {
         />
         <span className={styles.winRateLabel}>%{winRate} Kazanma</span>
       </div>
+
+      <div className={styles.divider} />
+
+      <div className={stats.streakType === 'win' ? styles.streakWin : styles.streakLoss}>
+        {stats.streakCount}{stats.streakType === 'win' ? 'G' : 'M'} Serisi
+      </div>
     </div>
   );
 }

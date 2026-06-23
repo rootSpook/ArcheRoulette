@@ -55,17 +55,13 @@ export default function AdminRank() {
             onChange={(e) => setStats({ ...stats, lp: Number(e.target.value) })} />
         </div>
 
-        <div className={styles.row}>
-          <label>Galibiyet</label>
-          <input type="number" min={0} value={stats.wins}
-            onChange={(e) => setStats({ ...stats, wins: Number(e.target.value) })} />
-        </div>
-
-        <div className={styles.row}>
-          <label>Mağlubiyet</label>
-          <input type="number" min={0} value={stats.losses}
-            onChange={(e) => setStats({ ...stats, losses: Number(e.target.value) })} />
-        </div>
+        <p style={{ color: '#664444', fontSize: '0.82rem' }}>
+          Galibiyet/Mağlubiyet artık otomatik takip ediliyor (
+          <span style={{ color: '#4caf50', fontWeight: 600 }}>{stats.wins}G</span>
+          {' / '}
+          <span style={{ color: '#e03030', fontWeight: 600 }}>{stats.losses}M</span>
+          ) — Oylama sayfasındaki Galibiyet/Mağlubiyet butonlarıyla güncellenir.
+        </p>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button type="submit" className={styles.btn}>Kaydet</button>

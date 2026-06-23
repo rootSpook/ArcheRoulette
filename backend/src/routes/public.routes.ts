@@ -33,7 +33,15 @@ router.get('/health', (_req: Request, res: Response) => {
 router.get('/stats', async (_req: Request, res: Response) => {
   let stats = await StreamerStats.findOne();
   if (!stats) stats = await StreamerStats.create({});
-  res.json(stats);
+
+  // wins/losses are always derived live from match history so they can
+  // never drift from what Maç Geçmişi shows
+  const [wins, losses] = await Promise.all([
+    Match.countDocuments({ result: 'win' }),
+    Match.countDocuments({ result: 'loss' }),
+  ]);
+
+  res.json({ ...stats.toObject(), wins, losses });
 });
 
 router.get('/settings', async (_req: Request, res: Response) => {
