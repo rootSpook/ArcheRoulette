@@ -35,6 +35,9 @@ export default function AdminOylama() {
   // Ref so polls can check spinning state without a stale closure
   const spinningRef = useRef(false);
 
+  // Match result recording for the winning champion
+  const [recordingMatch, setRecordingMatch] = useState(false);
+
   const countdown = useCountdown(session?.endsAt);
 
   const fetchData = useCallback(async () => {
@@ -78,6 +81,25 @@ export default function AdminOylama() {
     setSpinning(false);
     setSpinWinnerId(null);
     setPendingSession(null);
+  }
+
+  // Records the match result, then auto-resets the session back to idle so
+  // it's immediately ready for the next voting round — no extra click needed,
+  // and a page refresh can't re-show these buttons since status is now idle.
+  async function handleRecordMatch(result: 'win' | 'loss') {
+    if (!session?.winner || recordingMatch) return;
+    setRecordingMatch(true);
+    try {
+      await api.post('/admin/matches', { championId: session.winner._id, result });
+      const { data } = await api.post<VotingSession>('/admin/voting/cancel');
+      spinningRef.current = false;
+      setSession(data);
+      setSpinning(false);
+      setSpinWinnerId(null);
+      setPendingSession(null);
+    } finally {
+      setRecordingMatch(false);
+    }
   }
 
   async function handleSpin() {
@@ -196,8 +218,35 @@ export default function AdminOylama() {
                   alt={winner.name}
                   style={{ width: '100%', maxWidth: 420, borderRadius: 8, border: '1px solid #2a0a0a' }}
                 />
+
+                <div style={{ marginTop: '1.25rem' }}>
+                  <p style={{ color: '#884444', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
+                    Maç sonucu nasıl bitti? (Kaydettiğinde oylama otomatik olarak sıfırlanır.)
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                      className={styles.btn}
+                      style={{ background: '#1f7a32' }}
+                      onClick={() => handleRecordMatch('win')}
+                      disabled={recordingMatch}
+                    >
+                      {recordingMatch ? 'Kaydediliyor...' : '✓ Galibiyet'}
+                    </button>
+                    <button
+                      className={styles.btn}
+                      style={{ background: '#7b0000' }}
+                      onClick={() => handleRecordMatch('loss')}
+                      disabled={recordingMatch}
+                    >
+                      {recordingMatch ? 'Kaydediliyor...' : '✗ Mağlubiyet'}
+                    </button>
+                  </div>
+                </div>
+
                 <div style={{ marginTop: '1rem' }}>
-                  <button className={styles.btnOutline} onClick={handleCancel}>Sıfırla ve Kapat</button>
+                  <button className={styles.btnOutline} onClick={handleCancel} disabled={recordingMatch}>
+                    Sıfırla ve Kapat (sonuç kaydetmeden)
+                  </button>
                 </div>
               </div>
             )}
