@@ -13,7 +13,12 @@ export interface TokenPayload {
 function baseCookieOptions(): CookieOptions {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    // Decoupled from NODE_ENV on purpose: a production deployment can still
+    // be served over plain HTTP (e.g. IP-only, no domain/TLS yet). A `Secure`
+    // cookie is silently dropped by the browser on HTTP, which would break
+    // login without this being explicit. Flip COOKIE_SECURE=true once HTTPS
+    // is actually in front of the site.
+    secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
   };
 }

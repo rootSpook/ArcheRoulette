@@ -42,7 +42,7 @@ export default function VoteResults({ champions }: Props) {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => [`${value} oy`, '']}
+                formatter={(value) => [`${value} oy`, '']}
                 contentStyle={{ background: '#1a0000', border: '1px solid #3a0a0a', color: '#e8d0d0' }}
               />
             </PieChart>
