@@ -51,12 +51,6 @@ export default function Home() {
   const countdown = useCountdown(session?.endsAt);
   const hasVoted = votedId !== null;
 
-  function resolvePhase(status: string, hasWinner: boolean, showResult: boolean): Phase {
-    if (status === 'active') return 'vote';
-    if (status === 'result' && hasWinner && showResult) return 'see_champion';
-    return 'wait';
-  }
-
   const fetchAll = useCallback(async (query: string, showLoading = false) => {
     if (showLoading) setLoading(true);
     const [champsRes, statsRes, sessionRes] = await Promise.all([
@@ -135,46 +129,37 @@ export default function Home() {
 
   const selectedChamp = champions.find((c) => c._id === selectedId);
 
-  // ── WAIT phase ───────────────────────────────────────────────────────────
+  let mainContent: JSX.Element;
+
   if (phase === 'loading' || phase === 'wait') {
-    return (
-      <div className={styles.page}>
-        <div className={styles.overlay} />
-        <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-          <h1 className={styles.title} style={{ marginBottom: '1rem' }}>Oylama</h1>
-          <p style={{ color: '#884444', fontSize: '1rem' }}>
-            {phase === 'loading' ? 'Yükleniyor...' : 'Şu anda devam eden bir oylama bulunmamakta.'}
-          </p>
-        </div>
+    // ── WAIT phase ─────────────────────────────────────────────────────────
+    mainContent = (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
+        <h1 className={styles.title} style={{ marginBottom: '1rem' }}>Oylama</h1>
+        <p style={{ color: '#884444', fontSize: '1rem' }}>
+          {phase === 'loading' ? 'Yükleniyor...' : 'Şu anda devam eden bir oylama bulunmamakta.'}
+        </p>
       </div>
     );
-  }
-
-  // ── SEE CHAMPION phase ───────────────────────────────────────────────────
-  if (phase === 'see_champion' && session?.winner) {
+  } else if (phase === 'see_champion' && session?.winner) {
+    // ── SEE CHAMPION phase ───────────────────────────────────────────────────
     const w = session.winner;
     const splashUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${w.championId}_0.jpg`;
-    return (
-      <div className={styles.page}>
-        <div className={styles.overlay} />
-        <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: '1.5rem' }}>
-          <p style={{ color: '#884444', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Kazanan Şampiyon</p>
-          <h1 style={{ fontSize: '3rem', color: '#e03030', textShadow: '0 0 30px rgba(200,0,0,0.7)', margin: 0 }}>{w.name}</h1>
-          <img
-            src={splashUrl}
-            alt={w.name}
-            style={{ width: '100%', maxWidth: 600, borderRadius: 12, border: '2px solid #2a0a0a', boxShadow: '0 0 40px rgba(200,0,0,0.4)' }}
-          />
-        </div>
+    mainContent = (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', gap: '1.5rem' }}>
+        <p style={{ color: '#884444', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Kazanan Şampiyon</p>
+        <h1 style={{ fontSize: '3rem', color: '#e03030', textShadow: '0 0 30px rgba(200,0,0,0.7)', margin: 0 }}>{w.name}</h1>
+        <img
+          src={splashUrl}
+          alt={w.name}
+          style={{ width: '100%', maxWidth: 600, borderRadius: 12, border: '2px solid #2a0a0a', boxShadow: '0 0 40px rgba(200,0,0,0.4)' }}
+        />
       </div>
     );
-  }
-
-  // ── VOTE phase ───────────────────────────────────────────────────────────
-  return (
-    <div className={styles.page}>
-      <div className={styles.overlay} />
-      <div className={styles.content}>
+  } else {
+    // ── VOTE phase ───────────────────────────────────────────────────────────
+    mainContent = (
+      <div>
         <h1 className={styles.title}>Hangi Şampiyon Oynasın?</h1>
         <p className={styles.sub}>Yayıncının bir sonraki oyunda oynamasını istediğin şampiyonu seç ve oyla.</p>
 
@@ -184,36 +169,43 @@ export default function Home() {
           </span>
         </div>
 
-        <div className={styles.mainRow}>
-          <div className={styles.pollSection}>
-            <VoteResults champions={champions} />
+        <VoteResults champions={champions} />
 
-            <input
-              className={styles.search}
-              type="text"
-              placeholder="Şampiyon ara..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <input
+          className={styles.search}
+          type="text"
+          placeholder="Şampiyon ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-            {loading ? (
-              <p className={styles.status}>Şampiyonlar yükleniyor...</p>
-            ) : (
-              <div className={styles.grid}>
-                {champions.map((champ) => (
-                  <ChampionCard
-                    key={champ._id}
-                    champion={champ}
-                    selected={selectedId === champ._id}
-                    hasVoted={hasVoted}
-                    onSelect={setSelectedId}
-                  />
-                ))}
-              </div>
-            )}
-
-            {hasVoted && <p className={styles.alreadyVoted}>Oyunuzu kullandınız. Teşekkürler!</p>}
+        {loading ? (
+          <p className={styles.status}>Şampiyonlar yükleniyor...</p>
+        ) : (
+          <div className={styles.grid}>
+            {champions.map((champ) => (
+              <ChampionCard
+                key={champ._id}
+                champion={champ}
+                selected={selectedId === champ._id}
+                hasVoted={hasVoted}
+                onSelect={setSelectedId}
+              />
+            ))}
           </div>
+        )}
+
+        {hasVoted && <p className={styles.alreadyVoted}>Oyunuzu kullandınız. Teşekkürler!</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.overlay} />
+      <div className={styles.content}>
+        <div className={styles.mainRow}>
+          <div className={styles.pollSection}>{mainContent}</div>
 
           <aside className={styles.sidebar}>
             <StatsPanel stats={stats} />
@@ -221,15 +213,17 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={`${styles.voteBar} ${selectedId && !hasVoted ? styles.visible : ''}`}>
-        <div className={styles.selectedName}>Seçilen: <span>{selectedChamp?.name ?? ''}</span></div>
-        <div className={styles.oylaBtnWrapper}>
-          <button className={styles.oylaBtn} onClick={handleOyla} disabled={submitting}>
-            {submitting ? 'Gönderiliyor...' : 'Oyla'}
-          </button>
-          {error && <span style={{ color: '#e03030', fontSize: '0.8rem' }}>{error}</span>}
+      {phase === 'vote' && (
+        <div className={`${styles.voteBar} ${selectedId && !hasVoted ? styles.visible : ''}`}>
+          <div className={styles.selectedName}>Seçilen: <span>{selectedChamp?.name ?? ''}</span></div>
+          <div className={styles.oylaBtnWrapper}>
+            <button className={styles.oylaBtn} onClick={handleOyla} disabled={submitting}>
+              {submitting ? 'Gönderiliyor...' : 'Oyla'}
+            </button>
+            {error && <span style={{ color: '#e03030', fontSize: '0.8rem' }}>{error}</span>}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
