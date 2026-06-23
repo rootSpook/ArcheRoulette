@@ -7,6 +7,9 @@ import VotingSession from '../models/VotingSession';
 import VoterLog from '../models/VoterLog';
 import User from '../models/User';
 import Settings from '../models/Settings';
+import { syncRank } from '../lib/rankSync';
+import { isValidServer, SERVERS } from '../lib/riotRegions';
+import { setEnvVar } from '../lib/envFile';
 
 const router = Router();
 
@@ -69,7 +72,19 @@ router.put('/settings', async (req: Request, res: Response) => {
     settings.cooldownRounds = cooldownRounds ?? settings.cooldownRounds;
     await settings.save();
   }
+
   res.json(settings);
+});
+
+router.put('/settings/riot-api-key', (req: Request, res: Response) => {
+  const { apiKey } = req.body;
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.includes('\n')) {
+    res.status(400).json({ message: 'Geçerli bir API anahtarı girin.' });
+    return;
+  }
+
+  setEnvVar('RIOT_API_KEY', apiKey.trim());
+  res.json({ message: 'Riot API anahtarı güncellendi.' });
 });
 
 // ── Danger zone ──────────────────────────────────────────────────────────────
@@ -196,6 +211,60 @@ router.put('/stats', async (req: Request, res: Response) => {
   ]);
 
   res.json({ ...stats.toObject(), wins, losses });
+});
+
+router.get('/servers', (_req: Request, res: Response) => {
+  res.json(SERVERS);
+});
+
+router.put('/stats/riot-account', async (req: Request, res: Response) => {
+  const { gameName, tagLine, server } = req.body;
+  if (!gameName || !tagLine || !server) {
+    res.status(400).json({ message: 'Riot ID ve sunucu gerekli.' });
+    return;
+  }
+  if (!isValidServer(server)) {
+    res.status(400).json({ message: 'Geçersiz sunucu.' });
+    return;
+  }
+
+  let stats = await StreamerStats.findOne();
+  if (!stats) stats = await StreamerStats.create({});
+  stats.riotGameName = gameName;
+  stats.riotTagLine = tagLine;
+  stats.riotServer = server;
+  stats.riotLastError = undefined;
+  await stats.save();
+
+  res.json(stats);
+});
+
+router.delete('/stats/riot-account', async (_req: Request, res: Response) => {
+  const stats = await StreamerStats.findOne();
+  if (stats) {
+    stats.riotGameName = undefined;
+    stats.riotTagLine = undefined;
+    stats.riotServer = undefined;
+    stats.riotLastSyncAt = undefined;
+    stats.riotLastError = undefined;
+    await stats.save();
+  }
+  res.json(stats ?? {});
+});
+
+router.post('/stats/sync-rank', async (_req: Request, res: Response) => {
+  const existing = await StreamerStats.findOne();
+  if (!existing?.riotGameName || !existing.riotTagLine || !existing.riotServer) {
+    res.status(400).json({ message: 'Önce bir Riot ID kaydedin.' });
+    return;
+  }
+
+  const stats = await syncRank();
+  if (stats?.riotLastError) {
+    res.status(502).json(stats);
+    return;
+  }
+  res.json(stats);
 });
 
 // ── Matches ──────────────────────────────────────────────────────────────────

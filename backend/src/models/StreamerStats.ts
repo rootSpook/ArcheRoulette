@@ -17,6 +17,11 @@ export interface IStreamerStats extends Document {
   losses: number;
   streakType: StreakType;
   streakCount: number;
+  riotGameName?: string;
+  riotTagLine?: string;
+  riotServer?: string;
+  riotLastSyncAt?: Date;
+  riotLastError?: string;
 }
 
 const streamerStatsSchema = new Schema<IStreamerStats>(
@@ -28,6 +33,11 @@ const streamerStatsSchema = new Schema<IStreamerStats>(
     losses: { type: Number, default: 0 },
     streakType: { type: String, enum: ['win', 'loss'], default: 'win' },
     streakCount: { type: Number, default: 0 },
+    riotGameName: { type: String },
+    riotTagLine: { type: String },
+    riotServer: { type: String },
+    riotLastSyncAt: { type: Date },
+    riotLastError: { type: String },
   },
   { timestamps: true }
 );

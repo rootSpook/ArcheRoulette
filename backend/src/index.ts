@@ -5,6 +5,7 @@ import { connectDB } from './config/db';
 import authRoutes from './routes/auth.routes';
 import publicRoutes from './routes/public.routes';
 import adminRoutes from './routes/admin.routes';
+import { startRankSyncScheduler } from './lib/rankSync';
 
 dotenv.config();
 
@@ -22,4 +23,5 @@ connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+  startRankSyncScheduler();
 });

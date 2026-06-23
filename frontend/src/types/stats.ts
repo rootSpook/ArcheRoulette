@@ -16,4 +16,14 @@ export interface StreamerStats {
   losses: number;
   streakType: StreakType;
   streakCount: number;
+  riotGameName?: string;
+  riotTagLine?: string;
+  riotServer?: string;
+  riotLastSyncAt?: string;
+  riotLastError?: string;
+}
+
+export interface RiotServer {
+  value: string;
+  label: string;
 }

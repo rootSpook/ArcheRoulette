@@ -17,6 +17,11 @@ export default function AdminAyarlar() {
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState('');
 
+  const [riotApiKey, setRiotApiKey] = useState('');
+  const [riotKeySaving, setRiotKeySaving] = useState(false);
+  const [riotKeySuccess, setRiotKeySuccess] = useState('');
+  const [riotKeyError, setRiotKeyError] = useState('');
+
   const [resetInput, setResetInput] = useState('');
   const [resetSubmitting, setResetSubmitting] = useState(false);
   const [resetError, setResetError] = useState('');
@@ -64,6 +69,24 @@ export default function AdminAyarlar() {
       setTimeout(() => setSettingsSuccess(''), 2000);
     } finally {
       setSettingsSaving(false);
+    }
+  }
+
+  async function handleSaveRiotKey() {
+    if (!riotApiKey.trim()) return;
+    setRiotKeySaving(true);
+    setRiotKeyError('');
+    setRiotKeySuccess('');
+    try {
+      await api.put('/admin/settings/riot-api-key', { apiKey: riotApiKey.trim() });
+      setRiotApiKey('');
+      setRiotKeySuccess('Kaydedildi ✓ — hemen kullanılmaya başlandı.');
+      setTimeout(() => setRiotKeySuccess(''), 3000);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Bir hata oluştu.';
+      setRiotKeyError(msg);
+    } finally {
+      setRiotKeySaving(false);
     }
   }
 
@@ -127,6 +150,31 @@ export default function AdminAyarlar() {
             {pwError && <span style={{ color: '#e03030', fontSize: '0.85rem' }}>{pwError}</span>}
           </div>
         </form>
+      </div>
+
+      <div className={styles.card}>
+        <p style={{ color: '#884444', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Riot API Anahtarı</p>
+        <p style={{ color: '#664444', fontSize: '0.78rem', marginBottom: '1rem' }}>
+          Rank otomatik senkronizasyonu için kullanılır. Geliştirici anahtarları her 24 saatte bir
+          süresi dolar — burada yenisini girdiğinizde sunucu yeniden başlatılmadan hemen devreye girer.
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="password"
+            placeholder="RGAPI-..."
+            value={riotApiKey}
+            onChange={(e) => setRiotApiKey(e.target.value)}
+            style={{
+              flex: 1, minWidth: 200, padding: '0.45rem 0.75rem', background: '#0f0000',
+              border: '1px solid #2a0a0a', borderRadius: 5, color: '#e8d0d0', fontSize: '0.9rem', outline: 'none',
+            }}
+          />
+          <button className={styles.btn} onClick={handleSaveRiotKey} disabled={riotKeySaving || !riotApiKey.trim()}>
+            {riotKeySaving ? 'Kaydediliyor...' : 'Kaydet'}
+          </button>
+        </div>
+        {riotKeySuccess && <p className={styles.success} style={{ marginTop: '0.5rem' }}>{riotKeySuccess}</p>}
+        {riotKeyError && <p style={{ color: '#e03030', fontSize: '0.85rem', marginTop: '0.5rem' }}>{riotKeyError}</p>}
       </div>
 
       {settings && (
