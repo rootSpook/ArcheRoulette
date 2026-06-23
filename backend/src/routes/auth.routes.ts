@@ -1,20 +1,31 @@
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import User from '../models/User';
+import { requireAuth, AuthRequest } from '../middleware/auth.middleware';
+import { setAuthCookie, clearAuthCookie } from '../lib/authToken';
+import { loginLimiter } from '../middleware/rateLimit';
+import { validateBody } from '../middleware/validate';
+import { loginSchema } from '../lib/schemas';
 
 const router = Router();
 
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', loginLimiter, validateBody(loginSchema), async (req: Request, res: Response) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username });
   if (!user || !(await user.comparePassword(password))) {
     res.status(401).json({ message: 'Invalid credentials' });
     return;
   }
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
-  res.json({ token });
+  setAuthCookie(res, user._id.toString(), user.tokenVersion);
+  res.json({ message: 'Giriş başarılı.' });
+});
+
+router.post('/logout', (_req: Request, res: Response) => {
+  clearAuthCookie(res);
+  res.json({ message: 'Çıkış yapıldı.' });
+});
+
+router.get('/me', requireAuth, (req: AuthRequest, res: Response) => {
+  res.json({ userId: req.userId });
 });
 
 export default router;

@@ -1,9 +1,16 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import styles from './AdminLayout.module.css';
 
 export default function AdminLayout() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await logout();
+    navigate('/admin/login', { replace: true });
+  }
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.overlay} />
@@ -36,7 +43,7 @@ export default function AdminLayout() {
             </NavLink>
           </li>
         </ul>
-        <button onClick={logout} className={styles.logoutBtn}>Çıkış Yap</button>
+        <button onClick={handleLogout} className={styles.logoutBtn}>Çıkış Yap</button>
       </nav>
       <main className={styles.main}>
         <Outlet />

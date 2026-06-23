@@ -5,6 +5,7 @@ import StreamerStats from '../models/StreamerStats';
 import VotingSession from '../models/VotingSession';
 import Match from '../models/Match';
 import Settings from '../models/Settings';
+import { voteLimiter } from '../middleware/rateLimit';
 
 const router = Router();
 
@@ -70,7 +71,7 @@ router.get('/champions', async (req: Request, res: Response) => {
   res.json(champions);
 });
 
-router.post('/champions/:id/vote', async (req: Request, res: Response) => {
+router.post('/champions/:id/vote', voteLimiter, async (req: Request, res: Response) => {
   const session = await getSession();
   if (session.status !== 'active') {
     res.status(403).json({ message: 'Şu anda aktif bir oylama bulunmuyor.' });

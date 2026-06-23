@@ -22,9 +22,8 @@ export interface RankResult {
   unranked: boolean;
 }
 
-export async function fetchSoloRank(gameName: string, tagLine: string, platform: string): Promise<RankResult> {
-  const apiKey = process.env.RIOT_API_KEY;
-  if (!apiKey) throw new Error('RIOT_API_KEY tanımlı değil.');
+export async function fetchSoloRank(gameName: string, tagLine: string, platform: string, apiKey: string): Promise<RankResult> {
+  if (!apiKey) throw new Error('Riot API anahtarı tanımlı değil.');
 
   const regional = regionalRoutingFor(platform);
   if (!regional) throw new Error('Geçersiz sunucu.');

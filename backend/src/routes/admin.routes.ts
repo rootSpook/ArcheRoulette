@@ -8,8 +8,21 @@ import VoterLog from '../models/VoterLog';
 import User from '../models/User';
 import Settings from '../models/Settings';
 import { syncRank } from '../lib/rankSync';
-import { isValidServer, SERVERS } from '../lib/riotRegions';
-import { setEnvVar } from '../lib/envFile';
+import { SERVERS } from '../lib/riotRegions';
+import { encrypt } from '../lib/crypto';
+import { setAuthCookie } from '../lib/authToken';
+import { sensitiveActionLimiter } from '../middleware/rateLimit';
+import { validateBody } from '../middleware/validate';
+import {
+  passwordChangeSchema,
+  settingsSchema,
+  riotApiKeySchema,
+  statsSchema,
+  riotAccountSchema,
+  banSchema,
+  votingStartSchema,
+  matchCreateSchema,
+} from '../lib/schemas';
 
 const router = Router();
 
@@ -21,16 +34,8 @@ router.get('/dashboard', (req: AuthRequest, res: Response) => {
 
 // ── Account ──────────────────────────────────────────────────────────────────
 
-router.put('/account/password', async (req: AuthRequest, res: Response) => {
+router.put('/account/password', sensitiveActionLimiter, validateBody(passwordChangeSchema), async (req: AuthRequest, res: Response) => {
   const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) {
-    res.status(400).json({ message: 'Mevcut ve yeni şifre gerekli.' });
-    return;
-  }
-  if (newPassword.length < 6) {
-    res.status(400).json({ message: 'Yeni şifre en az 6 karakter olmalı.' });
-    return;
-  }
 
   const user = await User.findById(req.userId);
   if (!user) {
@@ -45,7 +50,13 @@ router.put('/account/password', async (req: AuthRequest, res: Response) => {
   }
 
   user.password = newPassword;
+  user.tokenVersion += 1; // invalidates every previously issued token
   await user.save();
+
+  // Reissue a fresh cookie with the new tokenVersion so the current session
+  // (which just proved it knows the old password) doesn't get logged out too.
+  setAuthCookie(res, user._id.toString(), user.tokenVersion);
+
   res.json({ message: 'Şifre güncellendi.' });
 });
 
@@ -57,12 +68,8 @@ router.get('/settings', async (_req: Request, res: Response) => {
   res.json(settings);
 });
 
-router.put('/settings', async (req: Request, res: Response) => {
+router.put('/settings', validateBody(settingsSchema), async (req: Request, res: Response) => {
   const { cooldownEnabled, cooldownRounds } = req.body;
-  if (cooldownRounds !== undefined && Number(cooldownRounds) < 1) {
-    res.status(400).json({ message: 'Bekleme süresi en az 1 round olmalı.' });
-    return;
-  }
 
   let settings = await Settings.findOne();
   if (!settings) {
@@ -76,15 +83,15 @@ router.put('/settings', async (req: Request, res: Response) => {
   res.json(settings);
 });
 
-router.put('/settings/riot-api-key', (req: Request, res: Response) => {
+router.put('/settings/riot-api-key', sensitiveActionLimiter, validateBody(riotApiKeySchema), async (req: Request, res: Response) => {
   const { apiKey } = req.body;
-  if (!apiKey || typeof apiKey !== 'string' || apiKey.includes('\n')) {
-    res.status(400).json({ message: 'Geçerli bir API anahtarı girin.' });
-    return;
-  }
 
-  setEnvVar('RIOT_API_KEY', apiKey.trim());
-  res.json({ message: 'Riot API anahtarı güncellendi.' });
+  let settings = await Settings.findOne();
+  if (!settings) settings = await Settings.create({});
+  settings.riotApiKeyEncrypted = encrypt(apiKey.trim());
+  await settings.save();
+
+  res.json({ message: 'Riot API anahtarı şifrelenerek kaydedildi.' });
 });
 
 // ── Danger zone ──────────────────────────────────────────────────────────────
@@ -102,11 +109,11 @@ router.post('/reset-all', async (_req: Request, res: Response) => {
 
 // ── Champion bans ────────────────────────────────────────────────────────────
 
-router.put('/champions/:id/ban', async (req: Request, res: Response) => {
+router.put('/champions/:id/ban', validateBody(banSchema), async (req: Request, res: Response) => {
   const { banned } = req.body;
   const champion = await Champion.findByIdAndUpdate(
     req.params.id,
-    { $set: { banned: !!banned } },
+    { $set: { banned } },
     { new: true }
   );
   if (!champion) {
@@ -118,7 +125,7 @@ router.put('/champions/:id/ban', async (req: Request, res: Response) => {
 
 // ── Voting controls ──────────────────────────────────────────────────────────
 
-router.post('/voting/start', async (req: Request, res: Response) => {
+router.post('/voting/start', validateBody(votingStartSchema), async (req: Request, res: Response) => {
   const { minutes = 0, seconds = 0 } = req.body;
   const durationMs = (Number(minutes) * 60 + Number(seconds)) * 1000;
   if (durationMs <= 0) {
@@ -192,7 +199,7 @@ router.post('/voting/spin', async (_req: Request, res: Response) => {
 
 // ── Stats ────────────────────────────────────────────────────────────────────
 
-router.put('/stats', async (req: Request, res: Response) => {
+router.put('/stats', validateBody(statsSchema), async (req: Request, res: Response) => {
   // wins/losses are derived automatically from recorded matches, not editable here
   const { tier, division, lp } = req.body;
   let stats = await StreamerStats.findOne();
@@ -217,16 +224,8 @@ router.get('/servers', (_req: Request, res: Response) => {
   res.json(SERVERS);
 });
 
-router.put('/stats/riot-account', async (req: Request, res: Response) => {
+router.put('/stats/riot-account', validateBody(riotAccountSchema), async (req: Request, res: Response) => {
   const { gameName, tagLine, server } = req.body;
-  if (!gameName || !tagLine || !server) {
-    res.status(400).json({ message: 'Riot ID ve sunucu gerekli.' });
-    return;
-  }
-  if (!isValidServer(server)) {
-    res.status(400).json({ message: 'Geçersiz sunucu.' });
-    return;
-  }
 
   let stats = await StreamerStats.findOne();
   if (!stats) stats = await StreamerStats.create({});
@@ -276,7 +275,7 @@ router.get('/matches', async (_req: Request, res: Response) => {
   res.json(matches);
 });
 
-router.post('/matches', async (req: Request, res: Response) => {
+router.post('/matches', validateBody(matchCreateSchema), async (req: Request, res: Response) => {
   const { championId, result } = req.body;
   const champion = await Champion.findById(championId);
   if (!champion) {

@@ -13,8 +13,9 @@ import AdminAyarlar from './pages/admin/Ayarlar';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth();
-  return token ? <>{children}</> : <Navigate to="/admin/login" replace />;
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return null;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/admin/login" replace />;
 }
 
 export default function App() {

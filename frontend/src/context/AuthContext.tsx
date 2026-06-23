@@ -1,35 +1,40 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '../lib/api';
 
 interface AuthContextType {
-  token: string | null;
+  isAuthenticated: boolean;
+  loading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(
-    () => localStorage.getItem('token')
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // The JWT lives in an httpOnly cookie, invisible to JS — so auth state is
+  // determined by asking the server, not by reading a token locally.
+  useEffect(() => {
+    api.get('/auth/me')
+      .then(() => setIsAuthenticated(true))
+      .catch(() => setIsAuthenticated(false))
+      .finally(() => setLoading(false));
+  }, []);
 
   async function login(username: string, password: string) {
-    const { data } = await api.post<{ token: string }>('/auth/login', {
-      username,
-      password,
-    });
-    localStorage.setItem('token', data.token);
-    setToken(data.token);
+    await api.post('/auth/login', { username, password });
+    setIsAuthenticated(true);
   }
 
-  function logout() {
-    localStorage.removeItem('token');
-    setToken(null);
+  async function logout() {
+    await api.post('/auth/logout');
+    setIsAuthenticated(false);
   }
 
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
