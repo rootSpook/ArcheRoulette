@@ -8,7 +8,9 @@
     "start": "node dist/index.js",
     "seed": "ts-node-dev --transpile-only src/scripts/seedChampions.ts",
     "seed:champions": "ts-node-dev --transpile-only src/scripts/seedChampions.ts",
-    "seed:admin": "ts-node-dev --transpile-only src/scripts/seedAdmin.ts"
+    "seed:admin": "ts-node-dev --transpile-only src/scripts/seedAdmin.ts",
+    "simulate:spin": "ts-node-dev --transpile-only src/scripts/simulateSpin.ts",
+    "simulate:random_spin": "ts-node-dev --transpile-only src/scripts/simulateRandomSpin.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
