@@ -115,13 +115,6 @@ router.post('/voting/start', async (req: Request, res: Response) => {
   await VoterLog.deleteMany({});
   await Champion.updateMany({}, { $set: { counter: 0 } });
 
-  // Tick down cooldowns by one round — a champion that just won won't be
-  // votable again until this reaches 0
-  await Champion.updateMany(
-    { cooldownRemaining: { $gt: 0 } },
-    { $inc: { cooldownRemaining: -1 } }
-  );
-
   // Always delete and recreate so a new _id is generated.
   // The frontend uses _id to detect a new session and clear localStorage votes.
   await VotingSession.deleteMany({});
@@ -219,6 +212,14 @@ router.post('/matches', async (req: Request, res: Response) => {
   const match = await Match.create({ champion: championId, result });
   champion.timesPlayed += 1;
   if (result === 'win') champion.wins += 1;
+
+  // A round only "counts" against other champions' cooldowns once a match
+  // result is actually recorded — a cancelled/reset round without a
+  // recorded result must not tick anyone's cooldown down.
+  await Champion.updateMany(
+    { _id: { $ne: championId }, cooldownRemaining: { $gt: 0 } },
+    { $inc: { cooldownRemaining: -1 } }
+  );
 
   // Recording a match result puts the champion on cooldown
   const settings = await Settings.findOne();
