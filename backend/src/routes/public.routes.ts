@@ -3,6 +3,7 @@ import Champion from '../models/Champion';
 import VoterLog from '../models/VoterLog';
 import StreamerStats from '../models/StreamerStats';
 import VotingSession from '../models/VotingSession';
+import Match from '../models/Match';
 
 const router = Router();
 
@@ -38,6 +39,13 @@ router.get('/voting', async (_req: Request, res: Response) => {
   const session = await getSession();
   await session.populate('winner', 'name imgLink championId');
   res.json(session);
+});
+
+router.get('/matches', async (_req: Request, res: Response) => {
+  const matches = await Match.find()
+    .populate('champion', 'name imgLink championId')
+    .sort({ playedAt: -1 });
+  res.json(matches);
 });
 
 router.get('/champions', async (req: Request, res: Response) => {
